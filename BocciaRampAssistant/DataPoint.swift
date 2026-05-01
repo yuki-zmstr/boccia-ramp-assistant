@@ -8,6 +8,6 @@
 import Foundation
 
 struct DataPoint: Codable {
-    let distance: Double
-    let rampPosition: Double
+    let distance: Double // meters
+    let rampPosition: Double // cm
 }
