@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var result: Double?
     @State private var selectedBallType = "D1"
     @State private var selectedColor = "Red"
+    @State private var isRefreshing = false
+    @State private var isUpdated = false
 
     let ballTypes = [
         "D1","D2",
@@ -32,8 +34,41 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: 18) {
                     
-                    Text("Boccia Ramp Assistant")
-                        .font(.largeTitle.bold())
+                    ZStack {
+                        
+                        // Centered Title
+                        Text("Boccia Ramp Assistant")
+                            .font(.largeTitle.bold())
+                        
+                        // Right-aligned Refresh Button
+                        HStack {
+                            Spacer()
+                            
+                            Button {
+                                refreshData()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    
+                                    if isRefreshing {
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                    } else if isUpdated {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.green)
+                                    }
+                                    
+                                    Text(isRefreshing ? "Updating" : "Refresh")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.gray.opacity(0.15))
+                                .cornerRadius(8)
+                            }
+                            .disabled(isRefreshing)
+                        }
+                    }
+                    
                     
                     // MARK: - Color Selector
                     HStack(spacing: 10) {
@@ -152,9 +187,6 @@ struct ContentView: View {
                 .padding(20)
             }
         }
-        .task {
-            await manager.load(ballType: selectedBallType, color: selectedColor)
-        }
     }
     
     // MARK: - Actions
@@ -162,19 +194,11 @@ struct ContentView: View {
     func selectColor(_ color: String) {
         selectedColor = color
         result = nil
-        
-        Task {
-            await manager.load(ballType: selectedBallType, color: color)
-        }
     }
     
     func selectBall(_ type: String) {
         selectedBallType = type
         result = nil
-        
-        Task {
-            await manager.load(ballType: type, color: selectedColor)
-        }
     }
     
     func tapKey(_ key: String) {
@@ -194,6 +218,22 @@ struct ContentView: View {
     
     func calculate() {
         guard let distance = Double(distanceText) else { return }
-        result = manager.calculate(distance: distance)
+        
+        result = manager.calculate(
+            distance: distance,
+            color: selectedColor,
+            ballType: selectedBallType
+        )
+    }
+    
+    func refreshData() {
+        isRefreshing = true
+        
+        Task {
+            await manager.refreshAll()
+            
+            isRefreshing = false
+            isUpdated = true
+        }
     }
 }

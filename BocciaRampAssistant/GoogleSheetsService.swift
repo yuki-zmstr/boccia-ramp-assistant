@@ -11,7 +11,7 @@ class GoogleSheetsService {
     
     static let shared = GoogleSheetsService()
     
-    let baseURL = "https://script.google.com/macros/s/AKfycby222Uek5_1E_HdJXHLWgUu7nLYrKs-VdUNwQp1XzdEvckcvzq3l3Wgw5mcxW_IdTjk/exec"
+    let baseURL = "https://script.google.com/macros/s/AKfycbxMID1ITMFqoUD6E3H0DGUQHiavSU7HOozhHouRVitqJdd4--eow1bKBDCFv7SEctZw/exec"
     
     func fetchData(ballType: String, color: String) async -> [DataPoint] {
         
@@ -28,6 +28,23 @@ class GoogleSheetsService {
         } catch {
             print("Fetch failed:", error)
             return []
+        }
+    }
+    
+    func fetchAll(color: String) async -> BallData {
+        
+        guard let encodedColor = color.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(baseURL)?color=\(encodedColor)") else {
+            return [:]
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoded = try JSONDecoder().decode(BallData.self, from: data)
+            return decoded
+        } catch {
+            print("Fetch failed:", error)
+            return [:]
         }
     }
 }
