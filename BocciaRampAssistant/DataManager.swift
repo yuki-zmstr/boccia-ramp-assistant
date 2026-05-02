@@ -14,8 +14,8 @@ class DataManager: ObservableObject {
     @Published var points: [DataPoint] = []
     
     // Load data for selected ball type
-    func load(ballType: String) async {
-        let rows = await GoogleSheetsService.shared.fetchData(ballType: ballType)
+    func load(ballType: String, color: String) async {
+        let rows = await GoogleSheetsService.shared.fetchData(ballType: ballType, color: color)
         
         if !rows.isEmpty {
             points = rows
