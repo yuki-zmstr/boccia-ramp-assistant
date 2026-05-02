@@ -28,113 +28,129 @@ struct ContentView: View {
     let ballTypeColumns = Array(repeating: GridItem(.flexible()), count: 3)
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                
-                Text("Boccia Ramp Assistant")
-                    .font(.largeTitle.bold())
-                
-                HStack(spacing: 12) {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 18) {
                     
-                    Button {
-                        selectColor("Red")
-                    } label: {
-                        Text("Red")
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(selectedColor == "Red" ? Color.red : Color.gray.opacity(0.2))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
+                    Text("Boccia Ramp Assistant")
+                        .font(.largeTitle.bold())
                     
-                    Button {
-                        selectColor("Blue")
-                    } label: {
-                        Text("Blue")
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(selectedColor == "Blue" ? Color.blue : Color.gray.opacity(0.2))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                }
-                
-                // Ball Type Grid
-                LazyVGrid(columns: ballTypeColumns, spacing: 10) {
-                    ForEach(ballTypes, id: \.self) { type in
+                    // MARK: - Color Selector
+                    HStack(spacing: 10) {
+                        
                         Button {
-                            selectBall(type)
+                            selectColor("Red")
                         } label: {
-                            Text(type)
-                                .font(.system(size: 16, weight: .bold))
-                                .frame(height: 40)
+                            Text("Red")
                                 .frame(maxWidth: .infinity)
-                                .background(
-                                    selectedBallType == type
-                                    ? (selectedColor == "Red" ? Color.red : Color.blue)
-                                    : Color.gray.opacity(0.2)
-                                )
-                                .foregroundColor(selectedBallType == type ? .white : .black)
+                                .frame(height: 40)
+                                .background(selectedColor == "Red" ? Color.red : Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
                                 .cornerRadius(10)
                         }
-                    }
-                }
-                
-                Text("Distance (m)")
-                    .font(.title3)
-                
-                // Distance Display
-                Text(distanceText.isEmpty ? "0" : distanceText)
-                    .font(.system(size: 44, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 70)
-                    .background(Color.gray.opacity(0.15))
-                    .cornerRadius(14)
-                
-                // Keypad
-                LazyVGrid(columns: keypadColumns, spacing: 10) {
-                    ForEach(["1","2","3","4","5","6","7","8","9",".","0","⌫"], id: \.self) { key in
+                        .contentShape(Rectangle())
+                        
                         Button {
-                            tapKey(key)
+                            selectColor("Blue")
                         } label: {
-                            Text(key)
-                                .font(.system(size: 26, weight: .bold))
-                                .frame(height: 60)
+                            Text("Blue")
                                 .frame(maxWidth: .infinity)
-                                .background(Color.blue.opacity(0.15))
-                                .cornerRadius(12)
+                                .frame(height: 40)
+                                .background(selectedColor == "Blue" ? Color.blue : Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    
+                    // MARK: - Ball Types
+                    LazyVGrid(columns: ballTypeColumns, spacing: 8) {
+                        ForEach(ballTypes, id: \.self) { type in
+                            Button {
+                                selectBall(type)
+                            } label: {
+                                Text(type)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .frame(height: 40)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        selectedBallType == type
+                                        ? (selectedColor == "Red" ? Color.red : Color.blue)
+                                        : Color.gray.opacity(0.2)
+                                    )
+                                    .foregroundColor(selectedBallType == type ? .white : .black)
+                                    .cornerRadius(10)
+                            }
+                            .contentShape(Rectangle())
                         }
                     }
-                }
-                
-                // Calculate Button
-                Button(action: {
-                    calculate()
-                }) {
-                    Text("CALCULATE")
-                        .font(.title2.bold())
+                    
+                    Text("Distance (m)")
+                        .font(.title3)
+                    
+                    // MARK: - Distance Display
+                    Text(distanceText.isEmpty ? "0" : distanceText)
+                        .font(.system(size: 36, weight: .bold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
-                }
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(16)
-                .contentShape(Rectangle())
-                
-                // Result
-                if let result {
-                    VStack(spacing: 8) {
-                        Text("Ramp Position")
-                            .font(.title3)
-                        
-                        Text("\(String(format: "%.1f", result)) cm")
-                            .font(.system(size: 64, weight: .heavy))
+                        .background(Color.gray.opacity(0.15))
+                        .cornerRadius(14)
+                    
+                    // MARK: - Keypad
+                    LazyVGrid(columns: keypadColumns, spacing: 8) {
+                        ForEach(["1","2","3","4","5","6","7","8","9",".","0","⌫"], id: \.self) { key in
+                            Button {
+                                tapKey(key)
+                            } label: {
+                                Text(key)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .frame(height: 60)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        (selectedColor == "Red" ? Color.red : Color.blue).opacity(0.15)
+                                    )
+                                    .cornerRadius(10)
+                            }
+                            .contentShape(Rectangle())
+                        }
                     }
+                    
+                    // MARK: - Calculate Button
+                    Button {
+                        calculate()
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation {
+                                proxy.scrollTo("RESULT", anchor: .bottom)
+                            }
+                        }
+                    } label: {
+                        Text("CALCULATE")
+                            .font(.title2.bold())
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                    }
+                    .background(selectedColor == "Red" ? Color.red : Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(14)
+                    .contentShape(Rectangle())
+                    
+                    // MARK: - Result
+                    if let result {
+                        VStack(spacing: 10) {
+                            Text("Ramp Position")
+                                .font(.title3)
+                            
+                            Text("\(String(format: "%.1f", result)) cm")
+                                .font(.system(size: 64, weight: .heavy))
+                        }
+                        .id("RESULT")
+                    }
+                    
+                    Spacer()
                 }
-                
-                Spacer()
+                .padding(20)
             }
-            .padding(24)
         }
         .task {
             await manager.load(ballType: selectedBallType, color: selectedColor)
@@ -142,6 +158,15 @@ struct ContentView: View {
     }
     
     // MARK: - Actions
+    
+    func selectColor(_ color: String) {
+        selectedColor = color
+        result = nil
+        
+        Task {
+            await manager.load(ballType: selectedBallType, color: color)
+        }
+    }
     
     func selectBall(_ type: String) {
         selectedBallType = type
@@ -170,14 +195,5 @@ struct ContentView: View {
     func calculate() {
         guard let distance = Double(distanceText) else { return }
         result = manager.calculate(distance: distance)
-    }
-    
-    func selectColor(_ color: String) {
-        selectedColor = color
-        result = nil
-        
-        Task {
-            await manager.load(ballType: selectedBallType, color: color)
-        }
     }
 }
